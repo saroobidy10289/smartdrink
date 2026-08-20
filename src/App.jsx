@@ -40,7 +40,9 @@ function Flow() {
   const addTransition = usePetriStore((s) => s.addTransition);
   const centerView = usePetriStore((s) => s.centerView);
   const setCenterView = usePetriStore((s) => s.setCenterView);
+  const markingSequence = usePetriStore((s) => s.markingSequence);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [markingPanelOpen, setMarkingPanelOpen] = useState(false);
 
   // La creation d'arc se fait desormais au clic sur un point (handle)
   // precis d'une place ou d'une transition -- voir PlaceNode/TransitionNode
@@ -93,9 +95,23 @@ function Flow() {
 
   const currentMode = modeLabel[mode] || modeLabel.select;
 
+  const handleSidebarClose = () => setSidebarOpen(false);
+  const handleMarkingClose = () => setMarkingPanelOpen(false);
+
+  const isAnyDrawerOpen = sidebarOpen || markingPanelOpen;
+
   return (
-    <div className={`app-container ${sidebarOpen ? 'sidebar-open' : ''}`}>
-      {sidebarOpen && <Sidebar />}
+    <div className={`app-container ${sidebarOpen ? 'sidebar-open' : ''} ${markingPanelOpen ? 'marking-panel-open' : ''}`}>
+      {/* Mobile backdrop */}
+      <div
+        className={`mobile-backdrop ${isAnyDrawerOpen ? 'visible' : ''}`}
+        onClick={() => { setSidebarOpen(false); setMarkingPanelOpen(false); }}
+      />
+
+      {/* Sidebar */}
+      <Sidebar onClose={handleSidebarClose} />
+
+      {/* Desktop toggle button */}
       <button
         className="sidebar-toggle"
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -113,7 +129,37 @@ function Flow() {
           )}
         </svg>
       </button>
+
       <div className="center-area">
+        {/* Mobile top bar */}
+        <div className="mobile-top-bar">
+          <button
+            className="mobile-hamburger"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            title="Menu"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          <span className="mobile-title">Reseau de Petri</span>
+          <button
+            className="mobile-marking-btn"
+            onClick={() => setMarkingPanelOpen(!markingPanelOpen)}
+            title="Marquages"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+            {markingSequence.length > 0 && <span className="mobile-marking-badge" />}
+          </button>
+        </div>
+
         <div className="view-toggle">
           <button
             className={`toggle-btn ${centerView === 'project' ? 'active' : ''}`}
@@ -211,7 +257,7 @@ function Flow() {
           <CalculationPanel />
         )}
       </div>
-      <MarkingPanel />
+      <MarkingPanel onClose={handleMarkingClose} />
     </div>
   );
 }
